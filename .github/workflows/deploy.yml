@@ -35,6 +35,15 @@ jobs:
           test -n "$EC2_HOST" || { echo "EC2_HOST repository secret is missing"; exit 1; }
           test -n "$EC2_USER" || { echo "EC2_USER repository secret is missing"; exit 1; }
           test -n "$EC2_SSH_KEY" || { echo "EC2_SSH_KEY repository secret is missing"; exit 1; }
+          case "$EC2_HOST" in
+            http://*|https://*|*/*) echo "EC2_HOST must contain only an IPv4 address or hostname"; exit 1 ;;
+          esac
+          printf '%s\n' "$EC2_SSH_KEY" > /tmp/ec2-key.pem
+          chmod 600 /tmp/ec2-key.pem
+          openssl pkey -in /tmp/ec2-key.pem -check -noout || {
+            echo "EC2_SSH_KEY is not a valid private key PEM"
+            exit 1
+          }
 
       # 4. Deploy to AWS EC2
       - name: Deploy to EC2
